@@ -1,0 +1,111 @@
+--GROUP BY 절
+--특정 컬럼을 기준으로 그룹을 만들어 그룹 함수를 활용할 목적으로 사용
+--GROUP 함수 : SUM(COLUMN), COUNT(COLUMN), AVG(COLUMN), MAX(COLUMN), MIN(COLUMN)
+
+-- 부서별 급여 총액과, 평균 급여를 구해보자
+SELECT DEPT_CODE, SUM(SALARY), AVG(SALARY)
+FROM EMPLOYEE
+GROUP BY DEPT_CODE;
+
+-- 여러 컬럼으로 그룹 만들기
+-- 부서 내 직급 별 급여 합계와 평균을 구해보자
+SELECT DEPT_CODE, JOB_CODE, SUM(SALARY), AVG(SALARY)
+FROM EMPLOYEE
+GROUP BY DEPT_CODE, JOB_CODE
+ORDER BY DEPT_CODE ASC NULLS LAST;
+
+--GROUP BY 절을 사용할 경우 GROUP BY절에서 그룹으로 지정한 컬럼만
+--SELECT절에 사용할 수 있다.
+--단 그룹함수 안에는 원하는 컬럼을 사용할 수 있다.
+
+--1. 급여가 300만원 이상인 사원들의 부서별 급여 총액을 구하시오
+SELECT DEPT_CODE, SUM(SALARY)
+FROM EMPLOYEE
+WHERE SALARY >= 3000000
+GROUP BY DEPT_CODE;
+
+--2. 급여가 300만원 이상인 사원들의 직급별 급여 평균을 구하시오
+SELECT JOB_CODE, AVG(SALARY)
+FROM EMPLOYEE
+WHERE SALARY >= 3000000
+GROUP BY JOB_CODE;
+
+--3. 부서 내 직급 내 연봉 레벨 별 급여의 최고 연봉과 최소 연봉을 구하시오
+--  구한 뒤 부서를 기준으로 오름차순 정렬하고 NULL값은 아래에 정렬하시오
+SELECT DEPT_CODE, JOB_CODE, SAL_LEVEL, MAX(SALARY*12), MIN(SALARY*12)
+FROM EMPLOYEE
+GROUP BY DEPT_CODE, JOB_CODE, SAL_LEVEL
+ORDER BY DEPT_CODE ASC NULLS LAST;
+
+---------------------------------------------------------------
+-- *** HAVING 절 : GROUP BY로 구한 그룹에 대한 조건을 설정
+-- 급여가 3000000 이상인 직원들의 부서별 평균 급여 조회
+SELECT DEPT_CODE, AVG(SALARY)
+FROM EMPLOYEE
+WHERE SALARY >= 3000000
+GROUP BY DEPT_CODE;
+
+-- 급여 평균이 3000000 이상인 부서별 급여 평균 조회
+SELECT DEPT_CODE, AVG(SALARY)
+FROM EMPLOYEE
+GROUP BY DEPT_CODE
+HAVING AVG(SALARY) >= 30000;
+
+--1.부서별 그룹의 급여합계가 9백만원을 초과하는 부서코드와 급여합계를 조회하고
+-- 부서코드 순으로 정렬하시오
+SELECT DEPT_CODE, SUM(SALARY)
+FROM EMPLOYEE
+GROUP BY DEPT_CODE
+HAVING SUM(SALARY) > 9000000
+ORDER BY DEPT_CODE ASC;
+
+---------------------------------------------------------------------------
+--집계함수(ROLLUP, CUBE)
+--그룹 별 산출한 결과 값의 집계를 계산하는 함수
+--집계함수를 사용하지 않은 쿼리
+SELECT DEPT_CODE, JOB_CODE, SAL_LEVEL, SUM(SALARY)
+FROM EMPLOYEE
+GROUP BY DEPT_CODE, JOB_CODE, SAL_LEVEL
+ORDER BY DEPT_CODE ASC NULLS LAST;
+
+--ROLLUP, CUBE 사용
+--그룹별 중간 집계를 계산
+SELECT DEPT_CODE, JOB_CODE, SAL_LEVEL, SUM(SALARY)
+FROM EMPLOYEE
+GROUP BY ROLLUP(DEPT_CODE, JOB_CODE, SAL_LEVEL)
+ORDER BY DEPT_CODE ASC NULLS LAST;
+
+--CUBE
+--그룹으로 지정된 모든 그룹의 모든 조합에 대해 중간집계를 구한다.
+SELECT DEPT_CODE, JOB_CODE, SAL_LEVEL, SUM(SALARY)
+FROM EMPLOYEE
+GROUP BY CUBE(DEPT_CODE, JOB_CODE, SAL_LEVEL)
+ORDER BY DEPT_CODE ASC NULLS LAST;
+
+--GROUPING 함수
+-- 인자로 전달받은 컬럼 집합의 산출물이면 0을 반환하고
+-- 아니면 1을 반환하는 함수
+SELECT DEPT_CODE, JOB_CODE, SUM(SALARY)
+,GROUPING(DEPT_CODE) 부서별, GROUPING(JOB_CODE) 직급별
+FROM EMPLOYEE
+GROUP BY ROLLUP(DEPT_CODE, JOB_CODE)
+ORDER BY DEPT_CODE NULLS LAST;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

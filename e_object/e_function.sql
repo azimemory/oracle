@@ -1,0 +1,42 @@
+--FUNCTION
+--실행 결과 값을 반환하는 PROCEDURE
+--외부로부터 값을 전달 받아서 연산을 하고 하나의 값을 반환.
+--생성구문 표현식
+--CREATE OR REPLACE FUNCTION 함수명(매개변수...)
+--RETURN 타입
+--IS
+-- 선언부
+--BEGIN
+-- 실행부
+-- RETURN 반환값;
+--[EXCEPTION 예외부]
+--END;
+--/
+
+--사번을 입력받아 해당 사원의 연봉을 계산하고 반환하는 함수
+--보너스가 포함된 연봉으로 반환할 것.
+CREATE OR REPLACE FUNCTION FC_BONUS_CALC
+(V_EMP_ID EMPLOYEE.EMP_ID%TYPE)
+RETURN NUMBER
+IS
+    V_SAL EMPLOYEE.SALARY%TYPE;
+    V_BONUS EMPLOYEE.BONUS%TYPE;
+BEGIN
+    SELECT SALARY, NVL(BONUS,0)
+    INTO V_SAL, V_BONUS
+    FROM EMPLOYEE
+    WHERE EMP_ID = V_EMP_ID;
+    
+    RETURN V_SAL*(1+V_BONUS)*12;
+END;
+/
+
+SELECT EMP_ID, FC_BONUS_CALC(EMP_ID)
+FROM EMPLOYEE
+WHERE DEPT_CODE = 'D9';
+
+
+
+
+
+
