@@ -120,15 +120,6 @@ and (dept_code = 'D9' OR DEPT_CODE = 'D6')
 AND HIRE_DATE BETWEEN '90/01/01' AND '00/12/01'
 AND SALARY >= 2700000;
 
---연산자 우선순위
---1. 산술연산자
---2. 연결연산자
---3. 비교연산자
---4. IS NULL, LIKE, IN
---5. BETWEEN AND
---6. NOT
---7. AND
---8. OR
 
 ----------------------실습 문제------------------------
 --1. 직급이 J7또는 J2인 직원 중 급여가 200만원 이상인 직원의 이름, 급여, 직급코드를 조회
@@ -162,7 +153,15 @@ FROM EMPLOYEE
 WHERE NOT BONUS IS NULL;
 
 
-
+--연산자 우선순위
+--1. 산술연산자
+--2. 연결연산자
+--3. 비교연산자
+--4. IS NULL, LIKE, IN
+--5. BETWEEN AND
+--6. NOT
+--7. AND
+--8. OR
 
 
 

@@ -1,0 +1,35 @@
+create table tb_type(
+
+-- char : 고정 길이 문자 데이터 저장, 최대 2000BYTE
+-- 자리수가 고정일 경우 char를 써주는게 속도가 빠르다.
+char_test char(100) --> 100byte의 문자까지 저장할 수 있다. 
+
+-- varchar2 : 가변길이 문자 데이터 저장, 최대 2000BYTE
+,varchar2_test varchar2(100) --> 최대 100byte
+--, varchar2_test vharchar2(100 char) --> 문자로 100자리까지 저장
+
+,CLOB_TEST clob 
+-- 2GB까지 가변길이 문자데이터를 저장
+,BLOB_TEST blob
+-- 2GB까지 가변길이 바이너리 데이터를 저장
+
+--NUMBER(precision, scale)
+,number_test NUMBER
+-- precision : 소수점을 포함한 전체 자리수, 최대 38자리까지 가능, 22BYTE
+-- scale : 소수점 이하 자리수 지정
+-- 두 개를 모두 생략하면 입력한 데이터값만큼 공간이 할당
+-- scale없이 precision만 지정하면 소수점 이하는 반올림되어 정수형만 저장
+,number_test1 NUMBER(7) 
+,number_test2 NUMBER(7, 1)
+,number_test3 NUMBER(7, 3)
+,number_test4 NUMBER(5, -2)
+,number_test5 NUMBER(4, 5)
+,number_test6 NUMBER(4, 5)
+,number_test7 NUMBER(3, 7)
+,number_test8 NUMBER(3, 7)
+
+--date : 기본값 : 년, 월, 일 
+-- 기본 날짜 형식 YY/MM/DD
+,date_test date
+
+);

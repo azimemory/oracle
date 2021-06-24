@@ -1,0 +1,178 @@
+--1. 부서명과 부서별 평균급여를 구하시오
+--평균 급여는 소수점에서 내림처리하여 정수로 표현하세요
+--부서에 사원이 존재하지 않아 평균급여가 null일경우는 0원으로 표시하세요
+select 
+DEPT_TITLE
+, nvl(floor(avg(salary)),0)
+from employee e
+right join department d on(e.dept_code = d.dept_id)
+group by DEPT_TITLE
+
+
+--2. 각 부서별 급여의 합계들을 구하여, 
+--부서 급여합이 100만을 초과하는 부서명과 부서별 급여합계를 조회하는
+--SELECT 문을 작성하시오.
+select 
+dept_title
+,sum(salary)
+from employee e
+inner join department d on(e.dept_code = d.dept_id)
+group by dept_title
+having sum(salary) > 1000000
+
+
+--3. 사원명, 주민번호, 나이, 입사일, 
+--오늘 날짜 기준 현재까지의 근무년수를 조회하는 SELECT 문을 작성하시오.
+--단 나이와 근무년수는 만 으로 적용하세요
+select 
+emp_name
+,emp_no
+,EXTRACT(YEAR FROM SYSDATE) - (substr(emp_no,1,2) + 1900) 나이
+,EXTRACT(YEAR FROM SYSDATE) - EXTRACT(YEAR FROM hire_date) 근속년수
+from employee;
+
+
+join + subquery 실습문제
+
+--4. 직원 테이블에서 
+--사번, 이름, 부서명, 직급명, 입사일, 보너스를 포함한 연봉, 순위
+--를 출력하세요.
+SELECT 
+  EMP_ID
+, EMP_NAME
+, DEPT_TITLE
+, JOB_NAME
+, HIRE_DATE
+,(SALARY + (SALARY * NVL(BONUS,0))) * 12
+,RANK() OVER(ORDER BY ((SALARY + (SALARY * NVL(BONUS, 0))) * 12) DESC) 순위
+FROM EMPLOYEE E
+JOIN DEPARTMENT D ON (E.DEPT_CODE = D.DEPT_ID)
+JOIN JOB J ON (E.JOB_CODE = J.JOB_CODE)
+
+
+--5. 직원 테이블에서 보너스 포함한 연봉이 높은 5명의
+-- 사번, 이름, 부서명, 직급명, 입사일을 조회하세요
+SELECT 
+EMP_ID
+, EMP_NAME
+, DEPT_TITLE
+, JOB_NAME
+, HIRE_DATE
+FROM 
+(
+SELECT EMP_ID, EMP_NAME, DEPT_TITLE
+, JOB_NAME, HIRE_DATE, SALARY
+,(SALARY + (SALARY * NVL(BONUS,0))) * 12
+, RANK() OVER(ORDER BY ((SALARY + (SALARY * NVL(BONUS, 0))) * 12)   DESC) 순위
+FROM EMPLOYEE E
+JOIN DEPARTMENT D ON (E.DEPT_CODE = D.DEPT_ID)
+JOIN JOB J ON (E.JOB_CODE = J.JOB_CODE)
+)
+WHERE 순위 <= 5;
+
+
+--6. 70년대 생이면서 성별이 여성이고 성이 전씨인 사원의
+--이름, 주민등록번호, 부서명, 직업명을 출력하세요.
+SELECT EMP_NAME, EMP_NO, DEPT_TITLE, JOB_NAME
+FROM EMPLOYEE E
+JOIN DEPARTMENT ON(DEPT_CODE = DEPT_ID)
+JOIN JOB J ON(E.JOB_CODE = J.JOB_CODE)
+WHERE SUBSTR(EMP_NO, 1,2) like '7%'
+      AND SUBSTR(EMP_NO, 8,1) = 2
+      AND EMP_NAME LIKE '전%';
+
+
+--7. 이름에 '형'이 들어가는 사원의 사원ID, 사원이름, 직업명을 출력하세요 
+
+SELECT EMP_ID, EMP_NAME, JOB_NAME
+FROM EMPLOYEE E
+JOIN JOB J ON(E.JOB_CODE = J.JOB_CODE)
+WHERE EMP_NAME LIKE '%형%';
+
+
+--8. 부서코드가 D5, D6 인 사원의 이름, 직업명, 부서코드, 부서명을 출력하세요
+SELECT EMP_NAME, JOB_NAME, DEPT_CODE, DEPT_TITLE
+FROM EMPLOYEE E
+JOIN JOB J ON(E.JOB_CODE = J.JOB_CODE)
+JOIN DEPARTMENT ON(DEPT_CODE = DEPT_ID)
+WHERE DEPT_ID IN('D5', 'D6');
+
+
+--9. 사번, 사원명, 급여
+--급여가 500만원 이상이면 '고급'
+--급여가 300~500만원이면 '중급'
+--그 이하는 '초급'으로 출력처리 하고 별칭은 '구분' 으로 한다.
+
+select
+emp_id
+,emp_name
+,case
+    when salary >= 5000000 then '고급'
+    when salary >= 3000000 then '중급'
+    else '초급'
+    end
+as "구분"
+from employee;
+
+
+--10. 주민번호 앞 6자리(생년월일) 중에서
+--월을 나타내는 숫자가 12보다 크거나
+--일을 나타내는 숫자가 30보다 큰 경우
+--월의 경우 12로
+--일의 경우 30로 바꿔서 이름과 함께 출력하는 쿼리를 작성하세요
+-- 619988-1111111  -> 611231 - 1111111
+
+select emp_name
+,substr(emp_no,1,2) ||
+case 
+    when substr(emp_no,3,2) > 12 and substr(emp_no,5,2) > 30 then '1230'
+    when substr(emp_no,3,2) > 12 then '12' || substr(emp_no,5,2)
+    when substr(emp_no,5,2) > 30 then substr(emp_no,3,2) || '01'
+    else substr(emp_no,3,4)
+end
+|| substr(emp_no,7,10)
+from employee
+
+
+--11. 부서에서 나이가 제일 어린 사원의 사원ID, 이름, 나이, 부서명, 직업명을 출력하세요
+
+SELECT 
+EMP_ID
+, EMP_NAME
+, EXTRACT(YEAR FROM SYSDATE)-EXTRACT(YEAR FROM(TO_DATE(SUBSTR(EMP_NO,1,6)))) + 1 AS 나이
+, DEPT_TITLE, JOB_NAME
+FROM EMPLOYEE E
+JOIN DEPARTMENT ON(DEPT_CODE = DEPT_ID)
+JOIN JOB J ON(E.JOB_CODE = J.JOB_CODE)
+WHERE 
+EXTRACT(YEAR FROM SYSDATE)-EXTRACT(YEAR FROM(TO_DATE(SUBSTR(EMP_NO,1,6)))) =
+(SELECT 
+MIN(EXTRACT(YEAR FROM SYSDATE)-EXTRACT(YEAR FROM(TO_DATE(SUBSTR(EMP_NO,1,6))))) 
+FROM 
+EMPLOYEE);
+
+--12. 보너스를 받은 사원의 사원명, 보너스, 부서명, 지역명을 출력하세요
+SELECT EMP_NAME, BONUS, DEPT_TITLE, LOCAL_NAME
+FROM EMPLOYEE
+JOIN DEPARTMENT ON(DEPT_CODE = DEPT_ID)
+JOIN LOCATION ON(LOCATION_ID = LOCAL_CODE)
+WHERE BONUS IS NOT NULL;
+
+--13. 부서가 위치한 국가가 한국이나 일본인 사원의
+--이름, 부서명, 지역명, 국가명을 출력하시오
+-- employee, department, location, national 
+SELECT EMP_NAME, D.DEPT_TITLE, LOCAL_NAME, NATIONAL_NAME
+FROM EMPLOYEE E
+JOIN DEPARTMENT D ON(E.DEPT_CODE = D.DEPT_ID)
+JOIN LOCATION L ON(D.LOCATION_ID = L.LOCAL_CODE)
+JOIN NATIONAL N ON(L.NATIONAL_CODE = N.NATIONAL_CODE)
+WHERE NATIONAL_NAME IN('한국', '일본');
+
+--14. job_code가 'J4', 'J7'이면서 보너스를 받지 못한 사원의 
+--이름, 직급명, 급여, 보너스금액(0원으로) 출력하세요
+SELECT EMP_NAME, JOB_NAME, SALARY, nvl(bonus,0)
+FROM EMPLOYEE E
+JOIN JOB J ON(E.JOB_CODE = J.JOB_CODE)
+WHERE bonus is null AND J.JOB_CODE IN('J4', 'J7');
+
+

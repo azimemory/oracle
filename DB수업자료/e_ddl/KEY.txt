@@ -1,0 +1,92 @@
+--primary key
+--기본키는 테이블의 각 행을 고유하게 식별하는 역할을 담당한다.
+--테이블당 하나만 정의 가능하다.
+--지정된 컬럼에는 중복된 값이나 NULL값이 입력될 수 없다.(최소성, 유일성)
+--	NOT NULL + UNIQUE
+--기본키로 지정 가능한 컬럼이 여러 개 있을 때는 
+--대표성을 지니는 키를 기본키로 지정한다. (이외의 키들은 후보키가 된다)
+--고유 인덱스(Unique index)가 자동으로 생성된다
+
+
+--foreign key, 참조키
+--참조키가 정의된 테이블이 자식 테이블이다.
+--참조되는 테이블을 부모 테이블이라고 한다.
+--데이터 타입이 반드시 일치해야 한다.
+--참조되는 컬럼은 유일성이 만족되어야 한다. (M:N관계 불가능)
+--M:N관계의 테이블이 존재한다면 1:N 관계로 바꿔주는 것이 좋다.
+
+
+--참조하고 있는 컬럼에 존재하는 값만 입력 할 수 있다.
+--참조키가 참조하고 있는 부모테이블의 행은 수정 및 삭제가 불가능하다.
+
+--ON DELETE CASCADE : 참조되는 부모 테이블의 행에 대한 DELETE를 허용한다.
+--부모 테이블의 행이 지워지면 자식 테이블의 행도 같이 지워진다.
+--ON DELETE SET NULL : 참조되는 부모 테이블의 행에 대한 DELETE를 허요한다.
+--부모 테이블의 행이 지워지면 자식 테이블의 행은 NULL 값으로 설정된다.
+
+--단 참조되는 모든 키에 적용해줘야 한다. * 하단 실습1
+
+
+--DEPARTMENT_C 테이블에서 부서코드가 D6인 행을 삭제할 예정이다.
+--DEPARTMENT_C의 DEPT_CODE는 EMPLOYEE_C테이블이 외래키로 참조하고 있다.
+--이때 삭제를 시도하면 참조무결성오류가 발생하게된다.
+--기본적으로 다른 테이블에 의해 참조되고 있는 컬럼값은 수정 및 삭제가 불가능하다.
+
+--삭제가 되지 않는다.
+DELETE FROM DEPARTMENT_C WHERE DEPT_CODE = 'D6';
+
+
+--외래키 설정 삭제하기
+alter table employee_c drop constraint ME_FK_DC;
+
+--외래키 다시 설정하고 ON DELETE 설정 걸어주기
+alter table employee_c ADD constraint ME_FK_DC 
+FOREIGN KEY(DEPT_CODE) REFERENCES MD_DEPARTMENT(DEPT_CODE)
+ON DELETE CASCADE;
+--ON DELETE SET NULL;  --DEPT_CODE만 삭제하고 NULL을 넣어준다.
+
+SELECT * FROM MD_EMPLOYEE WHERE DEPT_CODE = 'D6';
+--부서코드가 IS NULL인 행 찾기
+SELECT * FROM MD_EMPLOYEE WHERE DEPT_CODE IS NULL;
+--부모테이블에서 부서코드가 D6인 행 삭제 
+--이후 다시 위에 SELECT문 실행해서 확인시켜주기
+DELETE FROM MD_DEPARTMENT WHERE DEPT_CODE = 'D6';
+ROLLBACK;
+
+
+
+--실습1
+--자식테이블에서 참조하고 있는 값이 있을 때 삭제를 시도하면...
+
+create table testemp(
+emp_id varchar2(4), 
+temp_date varchar2(10),
+constraint temp_fk
+foreign key(emp_id) references employee_c(emp_id)
+)
+
+--값 넣어주기
+insert into testemp values('200','testdate');
+
+ALTER TABLE employee_c
+DROP CONSTRAINT MD_EMP_FK;
+
+ALTER TABLE employee_c
+ADD CONSTRAINT MD_EMP_FK FOREIGN KEY(dept_code) REFERENCES md_department(dept_code)
+ON DELETE CASCADE;
+
+--USER_CONSTRAINTs 는 뷰다...
+--system계정의 view들 보여주기
+SELECT * FROM USER_CONSTRAINTS; 
+SELECT * FROM user_CONSTRAINTS WHERE constraint_name = 'temp_fk'
+
+SELECT * FROM MD_EMPLOYEE WHERE DEPT_CODE = 'D1';
+SELECT * FROM testemp WHERE EMP_ID = '200';
+
+--testemp의 제약조건에 걸려서 삭제가 안되는 것을 확인할 수 있다.
+delete from md_department where dept_code = 'D1';
+
+
+
+
+

@@ -1,0 +1,85 @@
+--sysdba 계정으로 접근
+--bm계정 생성
+
+create user bm identified by test1
+
+--DCL : grant / revoke
+--권한주기
+--grant 권한 to 사용자
+grant create session to bm;
+grant RESOURCE to bm;
+--무제한 테이블스페이스 사용
+grant UNLIMITED TABLESPACE to bm;
+grant create table to bm;
+grant create view to bm;
+grant create sequence to bm;
+grant create trigger to bm;
+
+
+--ROLE : 다양한 오라클 객체에 대한 권한을 묶어놓은 것
+--CONNECT : CREATE SESSION 
+--RESOURCE: 
+--  CREATE CLUSTER, CREATE INDEXTYPE 
+--, CREATE OPERATOR, CREATE PROCEDURE
+--, CREATE SEQUENCE, CREATE TABLE, 
+--CREATE TRIGGER, CREATE TYPE
+
+--권한 한번에 주기
+grant 
+create session
+,RESOURCE
+,UNLIMITED TABLESPACE
+, create table
+, create view
+, create sequence
+, create trigger
+to bm;
+
+--권한 회수
+--revoke 권한 from 사용자
+revoke create table from bm;
+revoke create view from bm;
+revoke create sequence from bm;
+revoke create trigger from bm;
+
+--권한 한번에 회수
+revoke 
+,create session
+,RESOURCE
+,UNLIMITED TABLESPACE
+,create table
+, create view
+, create sequence
+, create trigger 
+from bm;
+
+--role 생성
+create role bm_role;
+
+--role에 권한 주기
+grant 
+create session --데이터베이스 접속권한
+,create table
+, create view
+, create sequence
+, create trigger
+to bm_role;
+
+--role에 정의된 권한을 bm에게 주기
+--grant role이름 to 사용자명
+grant bm_role to bm;
+
+--role에 정의된 권한을 bm에게서 회수하기
+--revoke role이름 from 사용자명
+revoke bm_role from bm;
+
+
+
+
+
+
+
+
+
+
+

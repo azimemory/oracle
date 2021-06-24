@@ -1,0 +1,159 @@
+create table [테이블명](
+--속성 제약조건
+--기본키설정
+--제약조건
+)
+
+--무결성 : 
+--무결성이란 데이터베이스에 저장된 데이터 값과 그것이 표현하는 현실 세계의 실제값이 
+--일치하는 정확성을 의미
+
+CREATE TABLE CONSTRAINT_EMP (
+
+--기본키 지정
+EID       CHAR(3) PRIMARY KEY, 
+
+-- 고유 무결성 : 릴레이션의 특정 속성에 대해서 각 튜플이 갖는 값들이 서로 달라야 한다는 규정
+ENO       CHAR(14) UNIQUE, 
+
+--Null 무결성 : 릴레이션의 특정속성 값이 Null이 될 수 없도록 하는 규정
+ENAME     VARCHAR2(20) NOT NULL, 
+
+-- 제약 조건 없음
+PHONE     VARCHAR2(12), 
+
+-- 기본 값, 현재시간
+HIRE_DATE DATE DEFAULT SYSDATE,
+
+-- 도메인 무결성 : 특정 속성의 값이, 그 속성이 정의된 도메인에 속한 값이어야 한다는 규정
+MARRIAGE  CHAR(1) DEFAULT 'N' CHECK (MARRIAGE IN ('Y','N')),
+
+-- 도메인 무결성 : 특정 속성의 값이, 그 속성이 정의된 도메인에 속한 값이어야 한다는 규정
+AGE  number(3) CHECK (AGE > 20)
+
+--제약조건 걸어주기
+--CONSTRAINT PLAYER_PK PRIMARY KEY (EID),
+
+--참조무결성 : 기본키와 참조키 간의 관계가 항상 유지됨
+--자식테이블에 데이터를 추가할 때 자식테이블의 참조키에 부모 테이블에 없는 값을 넣을 수 없다. 
+--CONSTRAINT PLAYER_FK FOREIGN KEY (PHONE) REFERENCES TEAM(CONSTRAINT_DESC)
+--[ON DELETE CASCADE | ON DELETE SET NULL]
+--ON UPDATE CASCADE : 부모테이블의 행이 수정되면 자식테이블도 같이 수정(오라클 지원X)
+--ON DELETE CASCADE : 부모 테이블의 행이 삭되되면 자식 테이블의 행도 같이 삭제
+--ON DELETE SET NULL: 부모테이블이 삭제되면 자식테이블의 행은 NULL
+)
+
+-- 1. AGE와 MERRIAGE의 도메인 모두 어겨보기 -> 수정 이후 실행
+-- 2. 실행한 insert문 다시 실행시켜서 EID(기본키), ENO(unique) 제약조건 어겨보기
+-- 3. EID(기본키, 최소성), ENAME(NOT NULL) 어겨보기 (컬럼명도 빼주고 값도 빼줘야 함)
+-- 4. HIRE_DATE, MARRIAGE 빼고 넣어서 기본값 들어가는 것 확인 하기
+
+insert into CONSTRAINT_EMP(EID,ENAME,ENO,PHONE,HIRE_DATE,MARRIAGE,AGE)
+values('AAA','jhon','123456-987654','01092348248','2020-01-01','Z',19);
+
+
+--SELECT문을 활용 해서 테이블 복제 가능
+CREATE TABLE MD_EMPLOYEE
+AS SELECT * FROM EMPLOYEE;
+
+CREATE TABLE MD_EMPLOYEE2
+AS SELECT EMP_ID, EMP_NAME FROM EMPLOYEE WHERE EMP_ID = 200;
+
+CREATE TABLE MD_location
+AS SELECT * FROM location
+
+CREATE TABLE MD_job
+AS SELECT * FROM job
+
+CREATE TABLE MD_department  
+AS SELECT * FROM department  
+
+CREATE TABLE MD_national  
+AS SELECT * FROM national
+
+--테이블 구조만 복사하기
+--where절의 모든 조건이 false 가 되기 때문에 구조만 복사된다.
+CREATE TABLE EMP_DEPT_D1
+AS SELECT EMP_ID, EMP_NAME, DEPT_CODE, HIRE_DATE
+    FROM EMPLOYEE
+    WHERE 1 = 0;
+
+
+------------------------------------------------------------------------------
+--테이블 수정 (alter)
+--alter table CONSTRAINT_EMP (add, modify, drop column)
+
+--컬럼 추가하기
+--add(컬럼명 데이터타입)
+alter table CONSTRAINT_EMP  add(add_test varchar2(100));
+desc tb_type;
+
+
+--컬럼 수정하기
+--ALTER TABLE 테이블명
+--MODIFY (컬럼명1 데이터 유형 [DEFAULT 식] [NOT NULL],
+               컬럼명2 데이터 유형 [DEFAULT 식] [NOT NULL]);
+
+--해당 컬럼에 데이터가 없는 경우 데이터타입을 변경할 수 있다.
+--데이터가 존재한다면 크기만 변경이 가능하다. 단 지금보다 작은 크기로는 변경할 수 없다.
+--이미 null이 존재한다면 제약조건을 not null로 바꿀 수 없다.
+alter table CONSTRAINT_EMP modify(add_test number(10) default 0 not null);
+desc tb_type;
+alter table CONSTRAINT_EMP modify(add_test number(10) default 0);
+
+--컬럼 삭제하기
+--drop colimn 컬럼명
+alter table tb_type drop column add_test;
+desc tb_type;
+
+
+--컬럼명 수정하기
+--ALTER TABLE 테이블명
+--RENAME COLUMN 변경해야할 컬럼명 TO 새로운 컬럼명;
+ALTER TABLE CONSTRAINT_EMP 
+RENAME COLUMN add_test TO second_test;
+
+--테이블명 수정하기
+--
+
+
+--기본키 추가하기
+ALTER TABLE [TABLE 명] ADD PRIMARY KEY (column)
+--기본키 삭제하기
+ALTER TABLE [TABLE 명] DROP PRIMARY KEY
+
+
+--제약조건 걸기
+--ALTER TABLE 테이블명
+--ADD CONSTRAINT 제약조건명 제약조건 (컬럼명);
+ALTER TABLE CONSTRAINT_EMP 
+ADD CONSTRAINT PLAYER_FK
+FOREIGN KEY (TEAM_ID) REFERENCES TEAM(TEAM_ID);
+
+--제약조건명 생략할 수도 있다.
+--이런 경우 dbms가 알아서 이름을 붙여준다.
+ALTER TABLE CONSTRAINT_EMP 
+ADD FOREIGN KEY (TEAM_ID) REFERENCES TEAM(TEAM_ID);
+
+
+--제약조건 삭제하기
+ALTER TABLE 테이블명
+DROP CONSTRAINT 제약조건명;
+
+
+ALTER TABLE PLAYER
+DROP CONSTRAINT PLAYER_FK;
+
+
+-------------------------------------------------------------------------------------------
+--테이블 삭제
+--drop table CONSTRAINT_EMP;
+--참조되어지는 테이블이 있을 경우 테이블 삭제
+DROP TABLE CONSTRAINT_EMP CASCADE CONSTRAINTS;
+
+
+
+
+
+
+

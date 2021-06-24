@@ -1,3 +1,8 @@
+--Oracle의 타입
+--문자열 : char, varchar2
+--숫자 : number
+--날짜 : date
+
 --select
 --테이블에서 원하는 데이터를 조회하는 구문
 --select문의 결과물 -> result set(반환된 행들의 집합)
@@ -39,10 +44,10 @@ select emp_name, salary*12 , salary*(1+bonus)*12 from employee;
 --수정
 select emp_name, salary*12, salary*(1+nvl(bonus,0))*12 from employee;
 
--- *** 리터럴 ***
---임의로 지정한 문자열, 날짜를 select절에 사용하면, 테이블에 존재하는 데이터처럼 사용할 수 있다.
---리터럴은 Result Set의 모든 행에 반복 표시된다.
---리털럴을 사용할 때는 '' 사용
+--*** 리터럴 ***
+--구문에서 직접 사용되는 값, select절에서 사용할 경우 마치 테이블에 존재하는 데이터처럼 RESULT SET에 포함될 수 있다.
+--EMPLOYEE 테이블에서 직원의 사원명, 급여, 단위를 조회
+SELECT EMP_NAME, SALARY,'원' FROM EMPLOYEE;
 
 --1. EMPLOYEE 테이블에서 직원의 전화번호, 사원명, 급여, 단위(원) 조회
 SELECT PHONE, EMP_NAME, SALARY, '원' AS 단위 
@@ -59,7 +64,7 @@ FROM EMPLOYEE;
 
 ------------------------------실습 문제--------------------------
 --1. EMPLOYEE 테이블에서 이름, 고용일, 근무일수를 조회
--- HINT : 날짜(DATE)형식도 +, - 연산이 가능
+-- HINT : 날짜(DATE)형식도 - 연산이 가능
 -- HINT2 : 오늘 날짜는 SYSDATE로 구할 수 있다.
 
 select emp_name, hire_date, sysdate - hire_date as 근무일수

@@ -1,0 +1,290 @@
+-- VIEW(뷰)
+
+-- SELECT쿼리 실행의 결과 화면을 저장한 객체
+-- 논리적인 가상테이블
+-- 실질적으로 데이터를 저장하고 있지 않음
+-- 테이블을 사용하는 것과 동일하게 사용할 수 있음
+
+-- [표현식]
+-- CREATE [OR REPLACE] VIEW 뷰이름 AS 서브쿼리
+-- [OR REPLACE] : 뷰 생성 시 기존에 같은 이름의 뷰가 있다면 해당 뷰를 변경.
+--> OR REPLACE를 사용하지 않고 같은 이름의 뷰 생성 시
+ -- 이미 다른 객체가 사용중인 이름 이라고 에러 발생
+
+-- [참고]
+-- 뷰에 대한 정보를 확인하는 데이터 딕셔너리
+-- 뷰 정의 시 사용한 쿼리 문장이 TEXT컬럼에 저장되어 있으며
+-- 뷰가 실행될 때는 TEXT에 기록된 SELECT에 문장이 다시 실행되면서 결과를 보여주는 구조
+SELECT * FROM USER_VIEWS;
+
+--------------------------------------------------------------------------------------------------------------------
+
+-- 1. VIEW 사용 예시
+
+-- 사번 이름, 부서명, 근무지역을 조회하고,
+-- 그 결과를 V_EMPLOYEE라는 뷰를 생성해서 저장하시오
+CREATE OR REPLACE VIEW V_EMPLOYEE
+AS SELECT EMP_ID, EMP_NAME, DEPT_TITLE, NATIONAL_NAME
+    FROM EMPLOYEE -- 베이스 테이블
+    LEFT JOIN DEPARTMENT ON (DEPT_CODE = DEPT_ID)
+    LEFT JOIN LOCATION ON (LOCATION_ID = LOCAL_CODE)
+    LEFT JOIN NATIONAL USING (NATIONAL_CODE);
+    
+-- * ORA-01031: insufficient privileges 오류 발생
+--> 계정에 뷰 생성 권한이 없어서 생기는 오류
+
+-- 1) SYSTEM 계정 로그인
+-- 2) KH 계정에 뷰 생성 권한 부여
+GRANT CREATE VIEW TO KH;
+-- 3) 다시 KH 계정으로 돌아와 뷰 생성 실행
+
+-- 뷰 조회
+SELECT * FROM V_EMPLOYEE;
+
+
+-- 베이스 테이블의 정보가 변경이 되면 VIEW도 변경됨
+COMMIT;
+
+-- 사번 205번인 직원의 이름을 '정중앙'으로 변경
+UPDATE EMPLOYEE
+SET EMP_NAME = '정중앙'
+WHERE EMP_ID = 205;
+
+-- 베이스 테이블 확인
+SELECT * FROM EMPLOYEE
+WHERE EMP_ID = 205;
+
+-- 뷰 확인
+SELECT * FROM V_EMPLOYEE
+WHERE EMP_ID = 205;
+
+ROLLBACK;
+
+
+
+-- 생성된 뷰 컬럼에 별칭 부여
+-- 서브쿼리의 SELECT절에 함수가 사용된 경우 반드시 별칭 지정
+-- 뷰 서브쿼리 안에 연산의 결과도 포함할 수 있다.
+CREATE OR REPLACE VIEW V_EMP_JOB(사번, 이름, 직급, 성별, 근무년수)
+AS SELECT EMP_ID, EMP_NAME, JOB_NAME, 
+    DECODE(SUBSTR(EMP_NO, 8, 1), 1, '남', 2, '여'),
+    EXTRACT(YEAR FROM SYSDATE) - EXTRACT(YEAR FROM HIRE_DATE)
+    FROM EMPLOYEE
+    JOIN JOB USING(JOB_CODE);
+-- DECODE(계산식 | 컬럼명, 조건값1, 선택값1, 조건값2, 선택값2.....)
+-- 비교하고자 하는 값 또는 컬럼이 조건식과 같으면 결과 값 반환
+
+-- EXTRACT : 년, 월, 일 정보를 추출하여 리턴
+-- EXTRACT(YEAR FROM 날짜) : 년도만 추출
+    
+SELECT * FROM V_EMP_JOB;
+
+
+-- 생성된 뷰를 이용해 DML(INSERT, UPDATE, DELETE) 사용 가능
+-- 뷰에서 요청한 DML 구문은 베이스 테이블도 변경함
+CREATE OR REPLACE VIEW V_JOB
+AS SELECT JOB_CODE, JOB_NAME
+    FROM JOB;
+    
+SELECT * FROM JOB;
+
+-- 뷰에 INSERT 사용
+INSERT INTO V_JOB VALUES('J8', '인턴');
+
+SELECT * FROM V_JOB;
+
+-- 베이스 테이블도 변경 되었는지 확인
+SELECT * FROM JOB;
+
+
+-- 뷰에 UPDATE 사용
+UPDATE V_JOB
+SET JOB_NAME = '알바'
+WHERE JOB_CODE = 'J8';
+
+SELECT * FROM V_JOB;
+SELECT * FROM JOB;
+
+
+-- 뷰에 DELETE 사용
+DELETE FROM V_JOB
+WHERE JOB_CODE = 'J8';
+
+SELECT * FROM JOB;
+SELECT * FROM V_JOB;
+
+
+--------------------------------------------------------------------------------------------------------------------
+
+-- 2. DLM명령어로 조작이 불가능한 경우
+-- 1) 뷰 정의에 포함되지 않은 컬럼을 조작하는 경우	
+-- 2) 뷰에 포함되지 않은 컬럼 중에,
+--    베이스가 되는 테이블 컬럼이 NOT NULL제약조건이 지정된 경우 -- INSERT시에 오류
+	--본 테이블에 insert를 하는데 컬럼이 지정되어 있지 않으니 null을 넣는다.
+	--not null제약 조건이 있으니 오류	
+-- 3) 본테이블의 값을 변형하는 경우(산술식, 문자결합, 그룹함수, group by, distinct...)
+--      문자결합 보여주기
+--	nvl함수 보여주기
+	
+	CREATE OR REPLACE VIEW EMP_SAL
+		AS SELECT EMP_ID, EMP_NAME, SALARY,nvl(SALARY,0) 연봉
+     	FROM EMPLOYEE;
+
+	SELECT * FROM EMP_SAL;
+
+	-- 뷰에 산술 계산식이 포함된 경우 INSERT/UPDATE 시 에러 발생
+	INSERT INTO EMP_SAL VALUES(800, '정진훈', 3000000, 36000000);
+	
+
+-- 4) JOIN을 이용해 여러 테이블을 연결한 경우
+	
+
+-- 1) 뷰 정의에 포함되지 않은 컬럼을 조작하는 경우
+CREATE OR REPLACE VIEW V_JOB2
+AS SELECT JOB_CODE
+    FROM JOB;
+
+SELECT * FROM V_JOB2;
+
+
+-- 뷰에 정의되지 않은 컬럼(JOB_NAME)을 조작하려고 해서 에러가 발생하는 경우
+INSERT INTO V_JOB2 VALUES('J8', '인턴');
+
+UPDATE V_JOB2
+SET JOB_NAME = '인턴'
+WHERE JOB_CODE = 'J7';
+
+DELETE FROM V_JOB2
+WHERE JOB_NAME = '사원';
+
+
+--INSERT INTO V_JOB2 VALUES('J8');
+
+SELECT * FROM JOB;
+
+--------------------------------------------------------------------------------------------
+2) JOIN을 이용해 여러 테이블을 연결한 경우
+CREATE OR REPLACE VIEW V_JOINEMP
+AS SELECT EMP_ID, EMP_NAME, DEPT_TITLE
+     FROM EMPLOYEE
+     JOIN DEPARTMENT ON (DEPT_CODE = DEPT_ID);
+     
+SELECT * FROM V_JOINEMP;
+
+-- 뷰 정의 시 JOIN을 사용한 경우 INSERT/UPDATE 시 에러 발생
+INSERT INTO V_JOINEMP VALUES(888, ‘조세오’, ‘인사관리부’);
+
+UPDATE V_JOINEMP
+SET DEPT_TITLE = '인사관리부'
+WHERE EMP_ID = 219; 
+
+-- 단 DELETE는 가능
+COMMIT;
+
+DELETE FROM V_JOINEMP
+WHERE EMP_ID = 219;
+
+SELECT * FROM V_JOINEMP;
+SELECT * FROM EMPLOYEE;
+SELECT * FROM DEPARTMENT;
+
+ROLLBACK;
+
+--------------------------------------------------------------------------------------------------------------------
+
+-- 4. VIEW 옵션
+
+-- VIEW 생성 표현식
+/*
+CREATE [OR REPLACE] [FORCE | NOFORCE] VIEW 뷰이름
+		[(alias[,alias]...]
+	AS subquery
+	[WITH CHECK OPTION]
+	[WITH READ ONLY];
+*/
+
+-- 1) OR REPLACE 옵션 : 기존에 동일한 뷰 이름이 존재하는 경우 덮어쓰고, 존재하지 않으면 새로 생성.
+-- 2) FORCE / NOFORCE 옵션
+--      FORCE : 서브쿼리에 사용된 테이블이 존재하지 않아도 뷰 생성
+--      NOFORCE : 서브쿼리에 사용된 테이블이 존재해야만 뷰 생성(기본값)
+-- 3) WITH CHECK OPTION 옵션 : 옵션을 설정한 컬럼의 값을 수정 불가능하게 함.
+-- 4) WITH READ ONLU 옵션 : 뷰에 대해 조회만 가능(DML 수행 불가)
+
+
+--------------------------------------------------------------------------------------------------------------------
+
+-- 1) OR REPLACE 옵션 : 기존에 동일한 뷰 이름이 존재하는 경우 덮어쓰고, 존재하지 않으면 새로 생성.
+CREATE OR REPLACE VIEW V_EMP2
+AS SELECT EMP_NO, EMP_NAME
+    FROM EMPLOYEE;
+
+SELECT * FROM V_EMP2;
+
+-- OR REPLACE 옵션 사용 시 덮어쓰기됨.
+CREATE OR REPLACE VIEW V_EMP2
+AS SELECT EMP_NO, EMP_NAME, SALARY
+    FROM EMPLOYEE;
+    
+SELECT * FROM V_EMP2;
+
+-- OR REPLACE 옵션 제거 시 덮어쓰기 되지 않음.
+CREATE VIEW V_EMP2
+AS SELECT EMP_NO, EMP_NAME
+    FROM EMPLOYEE;
+
+
+--------------------------------------------------------------------------------------------------------------------
+
+-- 2) FORCE / NOFORCE 옵션
+
+-- FORCE : 서브쿼리에 사용된 테이블이 존재하지 않아도 뷰 생성
+CREATE OR REPLACE FORCE VIEW V_EMP
+AS SELECT TCODE, TNAME, TCONTENT
+   FROM TT;
+-- 경고 메세지가 뜨지만 뷰 생성에는 성공함.
+
+SELECT * FROM V_EMP;
+
+SELECT * FROM USER_VIEWS;
+
+
+-- NOFORCE : 서브쿼리에 사용된 테이블이 존재해야만 뷰 생성(기본값)
+CREATE OR REPLACE /*NOFORCE*/ VIEW V_EMP2
+AS SELECT TCODE, TNAME, TCONTENT
+FROM TT;
+
+
+--------------------------------------------------------------------------------------------------------------------
+
+-- 3) WITH CHECK OPTION 옵션 : 
+--	VIEW를 만들 때 걸었던 조건과 부합하는 경우에만 추가, 수정가능
+CREATE OR REPLACE VIEW V_CHECK_JOB
+AS SELECT JOB_CODE
+    FROM JOB 
+    where job_code in('J1','J2','J3')
+WITH CHECK OPTION;
+
+
+SELECT * FROM V_CHECK_JOB;
+INSERT INTO V_CHECK_JOB VALUES('Z1');
+UPDATE V_CHECK_JOB SET JOB_CODE = 'ZZ'
+select * from job;
+
+-- DELETE는 가능함
+DELETE FROM V_CHECK_JOB;
+ROLLBACK;
+
+--------------------------------------------------------------------------------------------------------------------
+
+
+-- 4) WITH READ ONLY 옵션 : 뷰에 대해 조회만 가능(DML 수행 불가)
+CREATE OR REPLACE VIEW V_DEPT
+AS SELECT * FROM DEPARTMENT
+WITH READ ONLY;
+
+SELECT * FROM V_DEPT;
+
+DELETE FROM V_DEPT;
+
+SELECT * FROM EMPLOYEE;
+

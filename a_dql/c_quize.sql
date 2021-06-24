@@ -1,5 +1,5 @@
 -- 춘 대학교 워크북 과제
--- 3,10번 풀지 않음
+-- 3,7,10번 풀지 않음
 --1번.
 SELECT DEPARTMENT_NAME AS "학과 명", CATEGORY AS "계열"
 FROM TB_DEPARTMENT;

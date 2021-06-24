@@ -2,6 +2,18 @@
 --하나의 SQL문 안에 포함된 또다른 SQL문
 --SUBQUERY 는 SELECT절, FROM절, WHERE절, HAVING절에 사용 가능
 
+--서브쿼리가 작성되는 위치에 따라
+--SELECT절 : 스칼라 서브쿼리
+--FROM절 : 인라인뷰
+--WHERE, HAVING : 서브쿼리
+
+--서브쿼리의 결과 행,열에 따라
+--단일행
+--다중행
+--다중열
+
+
+
 --부서코드가 노옹철사원과 같은 소속의 직원 명단을 조회하시오.
 -- CASE.1 : 쿼리 두개 작성
 select dept_code from employee where emp_name = '노옹철';
@@ -58,6 +70,7 @@ WHERE SAL_LEVEL IN (SELECT SAL_LEVEL FROM SAL_GRADE WHERE MAX_SAL < 4999999);
 
 -- 비교연산자 ANY : 서브쿼리의 결과 값들 중에서 하나라도 비교연산시 TRUE가 나오면 TRUE 
 --               WHERE 1 > ANY(SUBQUERY) -> SUBQUERY의 결과값이 0,3,5 --> TRUE
+
 -- 박나라가 속한 부서의 가장 많은 급여를 받는 사람보다 연봉을 적게 받고
 -- 박나라가 속한 부서에서 가장 적은 급여를 받는 사람보다는 많은 급여를 받는 사원들의 명단을 조회
 SELECT *
@@ -66,6 +79,11 @@ WHERE SALARY < ANY(SELECT SALARY FROM EMPLOYEE WHERE DEPT_CODE =
                     (SELECT DEPT_CODE FROM EMPLOYEE WHERE EMP_NAME= '박나라'))
 AND SALARY > ANY(SELECT SALARY FROM EMPLOYEE WHERE DEPT_CODE =
                     (SELECT DEPT_CODE FROM EMPLOYEE WHERE EMP_NAME= '박나라'));
+
+select *
+from employee
+where dept_code in (select dept_code from employee where email like '%n%');
+
 
 -- 비교연산자 ALL : 서브쿼리의 결과 값들이 모두 비교연산시 TRUE가 나와야 TRUE
 --               WHERE 1 > ALL(SUBQUERY) -> SUBQUERY의 결과값이 0,0.5,0.7 --> TRUE
@@ -76,6 +94,9 @@ SELECT *
 FROM EMPLOYEE
 WHERE SALARY > ALL(SELECT SALARY FROM EMPLOYEE WHERE DEPT_CODE =
                     (SELECT DEPT_CODE FROM EMPLOYEE WHERE EMP_NAME= '박나라'));
+
+
+
 
 -- EXISTS : SUBQUERY의 결과가 존재하면 TRUE 없으면 FLASE
 SELECT * FROM 
@@ -128,7 +149,7 @@ ORDER BY EMP_NAME DESC;
 
 -- *** 인라인 뷰
 -- FROM절에 서브쿼리 사용
--- 서브쿼리의 결과를 테이블 대신으로 사용
+-- 서브쿼리의 RESULTSET를 테이블 대신으로 사용
 
 -- 전 직원 중 급여가 가장 높은 상위 5명의 순위, 이름, 급여를 조회하시오
 SELECT ROWNUM, EMP_NAME, SALARY
